@@ -1,5 +1,8 @@
 package com.matzuu.musique
 
 enum class Screen {
-    Home
+    Home,
+    Albums,
+    History,
+    Artists,
 }
