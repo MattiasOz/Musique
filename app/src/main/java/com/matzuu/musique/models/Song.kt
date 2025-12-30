@@ -1,5 +1,6 @@
 package com.matzuu.musique.models
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -7,6 +8,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
+@SuppressLint("UnsafeOptInUsageError")
 @Immutable
 @Serializable
 @Entity(tableName = "songs")

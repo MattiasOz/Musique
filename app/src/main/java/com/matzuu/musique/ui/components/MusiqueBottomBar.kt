@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.matzuu.musique.uiStates.CurrentSongUiState
 import com.matzuu.musique.viewmodels.MusiqueViewModel
+import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MusiqueBottomBar"
 
@@ -95,7 +96,7 @@ fun MusiqueBottomBar(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, InternalSerializationApi::class)
 @Composable
 private fun TextBar(){
     val musiqueViewModel: MusiqueViewModel = viewModel(factory = MusiqueViewModel.Factory)

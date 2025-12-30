@@ -3,7 +3,9 @@ package com.matzuu.musique.utils
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.matzuu.musique.models.Song
+import kotlinx.serialization.InternalSerializationApi
 
+@OptIn(InternalSerializationApi::class)
 class ListPagingSource(
     private val data: List<Song>
 ) : PagingSource<Int, Song>() {

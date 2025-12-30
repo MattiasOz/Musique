@@ -19,12 +19,15 @@ import com.matzuu.musique.models.Song
 import com.matzuu.musique.ui.components.MusiqueBottomBar
 import com.matzuu.musique.ui.components.TabTopBar
 import com.matzuu.musique.ui.screens.AlbumGridScreen
+import com.matzuu.musique.ui.screens.HistoryScreen
 import com.matzuu.musique.ui.screens.SongListScreen
 import com.matzuu.musique.viewmodels.MusiqueViewModel
 import com.matzuu.musique.workers.SongSyncWorker
+import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MainScreen"
 
+@OptIn(InternalSerializationApi::class)
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
@@ -65,6 +68,12 @@ fun MainScreen(
     }
 
     val navController = rememberNavController()
+
+    val onHistoryEntryClick = { songs: List<Song> ->
+        Log.d(TAG, "History entry clicked")
+        musiqueViewModel.setSongs(songs)
+        navController.navigate(Screen.Home.name)
+    }
 
     Scaffold(
         topBar = {
@@ -118,7 +127,10 @@ fun MainScreen(
                 AlbumGridScreen(musiqueViewModel)
             }
             composable(route = Screen.History.name) {
-                //TODO
+                HistoryScreen(
+                    musiqueViewModel,
+                    onClick = onHistoryEntryClick
+                )
             }
         }
     }

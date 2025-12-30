@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MusiqueViewModel"
 
@@ -55,20 +56,23 @@ class MusiqueViewModel(
     var albumListUiState: AlbumListUiState by mutableStateOf(AlbumListUiState.Loading)
         private set
 
+    val historyListUiState: AlbumListUiState by mutableStateOf(AlbumListUiState.Loading)
+        private set
+
     var songSliderPosition by mutableFloatStateOf(0f)
     var isPlaying by mutableStateOf(false)
     var currentTime by mutableIntStateOf(0)
     var totalTime by mutableIntStateOf(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val pagedSongsFlow: Flow<PagingData<Song>> = musicListUiState
+    val pagedSongsFlow: Flow<PagingData<Song>> = _musicListUiState
         .filterIsInstance<MusicListUiState.Success>()
         .flatMapLatest { state ->
             Pager(
                 config = PagingConfig(
                     pageSize = 20,
                     prefetchDistance = 20,
-
+                    initialLoadSize = 40
                 ),
                 pagingSourceFactory = {
                     ListPagingSource(state.songs)
@@ -82,7 +86,7 @@ class MusiqueViewModel(
 
     fun setSongs(songs: List<Song>) {
         viewModelScope.launch(
-            //context = Dispatchers.IO
+            context = Dispatchers.IO
         ) {
             _musicListUiState.value = MusicListUiState.Success(songs = songs)
             Log.d(TAG, "Set songs $musicListUiState")

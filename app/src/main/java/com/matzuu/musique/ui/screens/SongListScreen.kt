@@ -1,5 +1,6 @@
 package com.matzuu.musique.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,24 +22,27 @@ import com.matzuu.musique.models.Song
 import com.matzuu.musique.ui.components.SongCard
 import com.matzuu.musique.uiStates.MusicListUiState
 import com.matzuu.musique.viewmodels.MusiqueViewModel
+import kotlinx.serialization.InternalSerializationApi
+import okhttp3.internal.filterList
 
 private const val TAG = "SongListScreen"
 
+@OptIn(InternalSerializationApi::class)
 @Composable
 fun SongListScreen(
     musiqueViewModel: MusiqueViewModel,
     onSongClick: (Song) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    when (val state = musiqueViewModel.musicListUiState.collectAsState().value) {
+    val songs = musiqueViewModel.pagedSongsFlow.collectAsLazyPagingItems()
+    when (musiqueViewModel.musicListUiState.collectAsState().value) {
         is MusicListUiState.Success -> {
-            val songs = musiqueViewModel.pagedSongsFlow.collectAsLazyPagingItems()
             ListScreen(
                 songs = songs,
                 onSongClick = onSongClick,
                 modifier = modifier
             )
-            if (state.songs.isEmpty()) {
+            if (songs.itemCount <= 0) {
                 Text(text = "No songs found")
             }
         }
@@ -84,7 +88,7 @@ private fun ListScreen(
         items(
             count = songs.itemCount,
             key = songs.itemKey { it.id },
-            contentType = { "SongCard" }
+            contentType = { "song_card" }
         ) { idx ->
             val song = songs[idx]
             if (song != null) {

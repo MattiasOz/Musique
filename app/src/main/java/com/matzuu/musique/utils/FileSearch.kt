@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.Song
+import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "FileSearch"
 
@@ -20,6 +21,7 @@ fun findFiles(
     // TODO: integrate the database into this
 }
 
+@OptIn(InternalSerializationApi::class)
 fun fileSearch(
     context: Context
 ) : List<Song> {
