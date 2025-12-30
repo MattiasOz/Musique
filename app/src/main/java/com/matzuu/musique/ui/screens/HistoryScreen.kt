@@ -45,10 +45,3 @@ fun HistoryScreen(
         }
     }
 }
-
-@Preview
-@Composable
-fun PreviewHistoryScreen() {
-    HistoryScreen()
-}
-
