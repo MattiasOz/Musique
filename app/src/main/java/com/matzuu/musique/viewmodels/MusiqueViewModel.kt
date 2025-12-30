@@ -23,6 +23,7 @@ import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.uiStates.AlbumListUiState
 import com.matzuu.musique.uiStates.CurrentSongUiState
+import com.matzuu.musique.uiStates.HistoryListUiState
 import com.matzuu.musique.uiStates.MusicListUiState
 import com.matzuu.musique.utils.ListPagingSource
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +57,7 @@ class MusiqueViewModel(
     var albumListUiState: AlbumListUiState by mutableStateOf(AlbumListUiState.Loading)
         private set
 
-    val historyListUiState: AlbumListUiState by mutableStateOf(AlbumListUiState.Loading)
+    var historyListUiState: HistoryListUiState by mutableStateOf(HistoryListUiState.Loading)
         private set
 
     var songSliderPosition by mutableFloatStateOf(0f)
@@ -81,7 +82,7 @@ class MusiqueViewModel(
         }.cachedIn(viewModelScope)
 
     init {
-        //TODO the init stuff
+        updateHistoryEntries()
     }
 
     fun setSongs(songs: List<Song>) {
@@ -110,6 +111,13 @@ class MusiqueViewModel(
             currentSongUiState = CurrentSongUiState.Success(song = song)
         }
 
+    }
+
+    fun updateHistoryEntries() {
+        viewModelScope.launch {
+            val historyEntries = songRepository.getHistoryEntries()
+            historyListUiState = HistoryListUiState.Success(historyEntries = historyEntries)
+        }
     }
 
     fun scheduleWorker() {

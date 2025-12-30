@@ -10,6 +10,9 @@ class DefaultAppContainer(
     private val context: Context
 ) : AppContainer {
     override val songRepository: SongRepository by lazy {
-        SongRepositoryImpl(context)
+        SongRepositoryImpl(
+            context,
+            MusicDatabase.getDatabase(context).musicDao()
+        )
     }
 }

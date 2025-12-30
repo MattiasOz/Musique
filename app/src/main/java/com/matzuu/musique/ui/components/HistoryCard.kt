@@ -11,8 +11,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.matzuu.musique.models.HistoryEntry
 import com.matzuu.musique.models.Song
-import com.matzuu.musique.ui.screens.HistoryScreen
-import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "HistoryCard"
 
