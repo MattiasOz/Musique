@@ -16,10 +16,10 @@ data class HistoryEntry (
     val id: Long = 0L,
 
     @SerialName("name")
-    val name : String,
+    val name: String,
 
-    @SerialName("songs")
-    val songs : List<Song>,
+    //@SerialName("songs")
+    //val songs : List<Song>,
 
     @SerialName("songIdx")
     val songIdx: Int,

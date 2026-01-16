@@ -19,7 +19,7 @@ import com.matzuu.musique.viewmodels.MusiqueViewModel
 @Composable
 fun HistoryScreen(
     musiqueViewModel: MusiqueViewModel,
-    onClick : (List<Song>) -> Unit,
+    onClick : (Long) -> Unit,
     modifier : Modifier = Modifier
 ) {
     when(val state = musiqueViewModel.historyListUiState) {

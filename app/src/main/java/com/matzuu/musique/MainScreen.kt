@@ -21,6 +21,7 @@ import com.matzuu.musique.ui.components.TabTopBar
 import com.matzuu.musique.ui.screens.AlbumGridScreen
 import com.matzuu.musique.ui.screens.HistoryScreen
 import com.matzuu.musique.ui.screens.SongListScreen
+import com.matzuu.musique.ui.screens.SongSubListScreen
 import com.matzuu.musique.viewmodels.MusiqueViewModel
 import com.matzuu.musique.workers.SongSyncWorker
 import kotlinx.serialization.InternalSerializationApi
@@ -34,7 +35,7 @@ fun MainScreen(
 ) {
     val musiqueViewModel: MusiqueViewModel = viewModel(factory = MusiqueViewModel.Factory)
     SongSyncWorker.viewmodel = musiqueViewModel
-    musiqueViewModel.scheduleWorker()
+    //musiqueViewModel.scheduleWorker()
     musiqueViewModel.updateValues()
 
     val player = musiqueViewModel.mediaPlayer
@@ -69,10 +70,16 @@ fun MainScreen(
 
     val navController = rememberNavController()
 
-    val onHistoryEntryClick = { songs: List<Song> ->
+    val onHistoryEntryClick = { historyEntryId: Long ->
         Log.d(TAG, "History entry clicked")
-        musiqueViewModel.setSongs(songs)
+        musiqueViewModel.setSubSongsFromHistoryEntryId(historyEntryId)
         navController.navigate(Screen.Home.name)
+    }
+
+    val onAlbumClick = { albumName: String ->
+        Log.d(TAG, "Album clicked")
+        musiqueViewModel.setSubSongsFromAlbum(albumName)
+        navController.navigate(Screen.SubList.name)
     }
 
     Scaffold(
@@ -91,7 +98,11 @@ fun MainScreen(
                     {
                         Log.d(TAG, "History clicked")
                     }
-                )
+                ),
+                updateOnClick = {
+                    Log.d(TAG, "Update clicked")
+                    musiqueViewModel.scheduleWorker()
+                }
             )
             //Text(
             //    text = "Musique",
@@ -124,12 +135,22 @@ fun MainScreen(
                 )
             }
             composable(route = Screen.Albums.name) {
-                AlbumGridScreen(musiqueViewModel)
+                AlbumGridScreen(
+                    musiqueViewModel,
+                    onClick = onAlbumClick
+                )
             }
             composable(route = Screen.History.name) {
                 HistoryScreen(
                     musiqueViewModel,
                     onClick = onHistoryEntryClick
+                )
+            }
+            composable(route = Screen.SubList.name) {
+                SongSubListScreen(
+                    musiqueViewModel,
+                    onSongClick = onSongClick,
+                    "MyPlayList",
                 )
             }
         }

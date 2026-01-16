@@ -5,4 +5,5 @@ enum class Screen {
     Albums,
     History,
     Artists,
+    SubList,
 }

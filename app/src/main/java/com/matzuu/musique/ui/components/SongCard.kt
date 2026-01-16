@@ -94,19 +94,19 @@ fun SongCard(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun SongCardPreview() {
-val song = Song(2, "Den bästa och absoluta bnästastea låten som någon sin har skrivits av ett marsvin och ingen kan säga något annat då de aldrig har hört den", "/song.s", "Artist2", "Album1", 2)
-    val song2 = Song(2, "Song2", "/song.mp4", "Artist2", "Album1", 65)
-    Column {
-        SongCard(
-            song = song,
-            {}
-        )
-        SongCard(
-            song = song2,
-            {}
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun SongCardPreview() {
+//val song = Song(2, "Den bästa och absoluta bnästastea låten som någon sin har skrivits av ett marsvin och ingen kan säga något annat då de aldrig har hört den", "/song.s", "Artist2", "Album1", 2)
+//    val song2 = Song(2, "Song2", "/song.mp4", "Artist2", "Album1", 65)
+//    Column {
+//        SongCard(
+//            song = song,
+//            {}
+//        )
+//        SongCard(
+//            song = song2,
+//            {}
+//        )
+//    }
+//}

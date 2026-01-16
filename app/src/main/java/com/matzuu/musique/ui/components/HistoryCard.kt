@@ -17,13 +17,13 @@ private const val TAG = "HistoryCard"
 @Composable
 fun HistoryCard(
     historyEntry: HistoryEntry,
-    onClick: (List<Song>) -> Unit,
+    onClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = {
             Log.d(TAG, "Clicked on History Card")
-            onClick(historyEntry.songs)
+            onClick(historyEntry.id)
         },
         modifier = modifier
             .fillMaxWidth()
@@ -41,7 +41,7 @@ fun HistoryCard(
 fun PreviewHistoryCard() {
     val historyEntry = HistoryEntry(
         name = "HistoryEntry",
-        songs = listOf(),
+        //songs = listOf(),
         songIdx = 0,
         timestamp = 0L
     )

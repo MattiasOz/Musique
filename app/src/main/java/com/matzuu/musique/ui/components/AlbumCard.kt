@@ -20,13 +20,13 @@ private const val TAG = "AlbumCard"
 @Composable
 fun AlbumCard(
     album: Album,
-    onClick: () -> Unit,
+    onClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = {
             Log.d(TAG, "Clicked on Album Card")
-            onClick()
+            onClick(album.title)
         },
         modifier = modifier
             .padding(4.dp)

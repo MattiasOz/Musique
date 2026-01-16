@@ -1,5 +1,6 @@
 package com.matzuu.musique.models
 
+import android.R
 import android.annotation.SuppressLint
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
@@ -16,6 +17,9 @@ data class Song(
     @PrimaryKey
     @SerialName("id")
     val id: Long,
+
+    @SerialName("historyEntryId")
+    val historyEntryId: Long?,
 
     @SerialName("title")
     val title: String,

@@ -70,7 +70,15 @@ fun fileSearch(
             val album = it.getString(albumColumn)
 
             // Do something with the file ID and name
-            val song = Song(id, title, path, artist, album, duration)
+            val song = Song(
+                id = id,
+                title = title,
+                path = path,
+                artist = artist,
+                album = album,
+                duration = duration,
+                historyEntryId = null
+            )
             res.add(song)
         }
     }

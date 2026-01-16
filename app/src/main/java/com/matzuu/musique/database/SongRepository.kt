@@ -6,13 +6,19 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.matzuu.musique.models.HistoryEntry
+import com.matzuu.musique.models.Song
 import com.matzuu.musique.utils.SONG_SYNC_WORK_TAG
 import com.matzuu.musique.workers.SongSyncWorker
 
 interface SongRepository {
 
     fun enqueueWorker()
+    suspend fun insertFullSongList(songs: List<Song>)
+    suspend fun insertHistoryEntry(historyEntry: HistoryEntry, songs: List<Song>)
+    suspend fun getFullSongList(): List<Song>
     suspend fun getHistoryEntries(): List<HistoryEntry>
+    suspend fun getHistorySongs(historyEntryId: Long): List<Song>
+    suspend fun getSongsFromAlbum(album: String): List<Song>
 }
 
 class SongRepositoryImpl(
@@ -32,7 +38,34 @@ class SongRepositoryImpl(
         workManager.enqueueUniqueWork(SONG_SYNC_WORK_TAG, ExistingWorkPolicy.REPLACE, workRequest)
     }
 
+    override suspend fun insertFullSongList(songs: List<Song>) {
+        musicDao.insertFullSongList(songs)
+    }
+
+    override suspend fun insertHistoryEntry(
+        historyEntry: HistoryEntry,
+        songs: List<Song>
+    ) {
+        val id = musicDao.insertHistoryEntry(historyEntry)
+        val songs2 = songs.map { song ->
+            song.copy(historyEntryId = id)
+        }
+        musicDao.insertHistoryEntrySongs(songs2)
+    }
+
+    override suspend fun getFullSongList(): List<Song> {
+        return musicDao.getAllSongs()
+    }
+
     override suspend fun getHistoryEntries(): List<HistoryEntry> {
         return musicDao.getHistoryEntries()
+    }
+
+    override suspend fun getHistorySongs(historyEntryId: Long): List<Song> {
+        return musicDao.getHistorySongs(historyEntryId)
+    }
+
+    override suspend fun getSongsFromAlbum(album: String): List<Song> {
+        return musicDao.getSongsFromAlbum(album)
     }
 }

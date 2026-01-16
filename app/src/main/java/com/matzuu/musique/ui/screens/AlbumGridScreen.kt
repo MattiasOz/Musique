@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.matzuu.musique.models.Album
 import com.matzuu.musique.ui.components.AlbumCard
 import com.matzuu.musique.uiStates.AlbumListUiState
 import com.matzuu.musique.uiStates.MusicListUiState
@@ -19,7 +20,8 @@ private const val TAG = "AlbumGridScreen"
 
 @Composable
 fun AlbumGridScreen(
-    musiqueViewModel: MusiqueViewModel
+    musiqueViewModel: MusiqueViewModel,
+    onClick : (String) -> Unit
 ) {
     when(val state = musiqueViewModel.albumListUiState) {
         is AlbumListUiState.Success -> {
@@ -29,7 +31,7 @@ fun AlbumGridScreen(
                 items(items = state.albums) { album ->
                     AlbumCard(
                         album = album,
-                        onClick = {}
+                        onClick = onClick
                     )
                 }
             }

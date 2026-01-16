@@ -18,9 +18,12 @@ class SongSyncWorker(
 ) : CoroutineWorker(context, params) {
     @OptIn(InternalSerializationApi::class)
     override suspend fun doWork(): Result {
+        Log.d(TAG, "SongSyncWorker started")
         val songs = fileSearch(context)
         try {
             viewmodel!!.apply {
+                insertFullSongList(songs)
+
                 setSongs(songs = songs)
 
                 val albums = songs.distinctBy{

@@ -51,6 +51,9 @@ class MusiqueViewModel(
     private val _musicListUiState = MutableStateFlow<MusicListUiState>(MusicListUiState.Loading)
     val musicListUiState: StateFlow<MusicListUiState> = _musicListUiState.asStateFlow()
 
+    private val _musicSubListUiState = MutableStateFlow<MusicListUiState>(MusicListUiState.Loading)
+    val musicSubListUiState: StateFlow<MusicListUiState> = _musicSubListUiState.asStateFlow()
+
     var currentSongUiState: CurrentSongUiState by mutableStateOf(CurrentSongUiState.Unset)
         private set
 
@@ -64,6 +67,7 @@ class MusiqueViewModel(
     var isPlaying by mutableStateOf(false)
     var currentTime by mutableIntStateOf(0)
     var totalTime by mutableIntStateOf(0)
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val pagedSongsFlow: Flow<PagingData<Song>> = _musicListUiState
@@ -81,8 +85,47 @@ class MusiqueViewModel(
             ).flow
         }.cachedIn(viewModelScope)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val pagedSubSongsFlow: Flow<PagingData<Song>> = _musicSubListUiState
+        .filterIsInstance<MusicListUiState.Success>()
+        .flatMapLatest { state ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = 20,
+                    prefetchDistance = 20,
+                    initialLoadSize = 10
+                ),
+                pagingSourceFactory = {
+                    ListPagingSource(state.songs)
+                }
+            ).flow
+        }.cachedIn(viewModelScope)
+
     init {
+        fetchFullSongList()
         updateHistoryEntries()
+    }
+
+    fun insertFullSongList(songs: List<Song>) {
+        viewModelScope.launch {
+            songRepository.insertFullSongList(songs)
+        }
+    }
+
+    fun fetchFullSongList() {
+        _musicListUiState.value = MusicListUiState.Loading
+        viewModelScope.launch {
+            val songs = songRepository.getFullSongList()
+            _musicListUiState.value = MusicListUiState.Success(songs = songs)
+            Log.d(TAG, "Set songs ${musicListUiState.value}")
+        }
+    }
+
+    fun fetchAlbumList() {
+        _musicListUiState.value = MusicListUiState.Loading
+        viewModelScope.launch {
+            TODO()
+        }
     }
 
     fun setSongs(songs: List<Song>) {
@@ -91,6 +134,31 @@ class MusiqueViewModel(
         ) {
             _musicListUiState.value = MusicListUiState.Success(songs = songs)
             Log.d(TAG, "Set songs $musicListUiState")
+        }
+    }
+
+    fun setSubSongs(songs: List<Song>) {
+        viewModelScope.launch(
+        ) {
+            _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
+            Log.d(TAG, "Set sublist songs $musicSubListUiState")
+        }
+    }
+
+    fun setSubSongsFromHistoryEntryId(id: Long) {
+        viewModelScope.launch(
+        ) {
+            val songs = songRepository.getHistorySongs(id)
+            _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
+            Log.d(TAG, "Set sublist songs from history $musicSubListUiState")
+        }
+    }
+
+    fun setSubSongsFromAlbum(album: String) {
+        viewModelScope.launch {
+            val songs = songRepository.getSongsFromAlbum(album)
+            _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
+            Log.d(TAG, "Set sublist songs from album ${songs.forEach { "${it.title}\n}"}}")
         }
     }
 
@@ -110,7 +178,6 @@ class MusiqueViewModel(
             Log.d(TAG, "Song set to $song")
             currentSongUiState = CurrentSongUiState.Success(song = song)
         }
-
     }
 
     fun updateHistoryEntries() {
