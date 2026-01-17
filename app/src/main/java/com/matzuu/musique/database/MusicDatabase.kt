@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.HistoryEntry
 import com.matzuu.musique.models.Song
 
-@Database(entities = [Song::class, HistoryEntry::class], version = 1, exportSchema = false)
+@Database(entities = [Song::class, HistoryEntry::class, Album::class], version = 1, exportSchema = false)
 abstract class MusicDatabase : RoomDatabase() {
     abstract fun musicDao(): MusicDao
 

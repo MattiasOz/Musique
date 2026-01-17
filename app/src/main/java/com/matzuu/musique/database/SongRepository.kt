@@ -5,6 +5,7 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.HistoryEntry
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.utils.SONG_SYNC_WORK_TAG
@@ -14,7 +15,9 @@ interface SongRepository {
 
     fun enqueueWorker()
     suspend fun insertFullSongList(songs: List<Song>)
+    suspend fun insertFullAlbumList(albums: List<Album>)
     suspend fun insertHistoryEntry(historyEntry: HistoryEntry, songs: List<Song>)
+    suspend fun getAlbumList() : List<Album>
     suspend fun getFullSongList(): List<Song>
     suspend fun getHistoryEntries(): List<HistoryEntry>
     suspend fun getHistorySongs(historyEntryId: Long): List<Song>
@@ -42,6 +45,10 @@ class SongRepositoryImpl(
         musicDao.insertFullSongList(songs)
     }
 
+    override suspend fun insertFullAlbumList(albums: List<Album>) {
+        musicDao.insertFullAlbumList(albums)
+    }
+
     override suspend fun insertHistoryEntry(
         historyEntry: HistoryEntry,
         songs: List<Song>
@@ -51,6 +58,10 @@ class SongRepositoryImpl(
             song.copy(historyEntryId = id)
         }
         musicDao.insertHistoryEntrySongs(songs2)
+    }
+
+    override suspend fun getAlbumList(): List<Album> {
+        return musicDao.getAllAlbums()
     }
 
     override suspend fun getFullSongList(): List<Song> {

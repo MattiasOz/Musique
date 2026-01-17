@@ -20,22 +20,24 @@ class SongSyncWorker(
     override suspend fun doWork(): Result {
         Log.d(TAG, "SongSyncWorker started")
         val songs = fileSearch(context)
+        Log.d(TAG, "Songs: $songs")
+        val albums = songs.distinctBy{
+            it.album
+        }.map { song ->
+            Album(
+                id = song.id,
+                title = song.album,
+            )
+        }.sortedBy {
+            it.title
+        }
+        Log.d(TAG, "albums: $albums")
         try {
             viewmodel!!.apply {
                 insertFullSongList(songs)
+                insertFullAlbumList(albums)
 
                 setSongs(songs = songs)
-
-                val albums = songs.distinctBy{
-                    it.album
-                }.map { song ->
-                    Album(
-                        id = song.id,
-                        title = song.album,
-                    )
-                }.sortedBy {
-                    it.title
-                }
                 setAlbums(albums = albums)
             }
         } catch (e: NullPointerException) {

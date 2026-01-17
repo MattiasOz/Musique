@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.HistoryEntry
 import com.matzuu.musique.models.Song
 import kotlinx.serialization.InternalSerializationApi
@@ -18,10 +19,15 @@ interface MusicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFullSongList(songs: List<Song>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFullAlbumList(albums: List<Album>)
 
     @OptIn(InternalSerializationApi::class)
-    @Query("SELECT * FROM songs")
+    @Query("SELECT * FROM songs ORDER BY title")
     suspend fun getAllSongs(): List<Song>
+
+    @Query("SELECT * FROM albums ORDER BY title")
+    suspend fun getAllAlbums(): List<Album>
 
     @Query("DELETE FROM songs")
     suspend fun clearSongs()

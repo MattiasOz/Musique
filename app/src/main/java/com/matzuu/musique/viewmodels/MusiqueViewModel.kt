@@ -103,12 +103,19 @@ class MusiqueViewModel(
 
     init {
         fetchFullSongList()
+        fetchAlbumList()
         updateHistoryEntries()
     }
 
     fun insertFullSongList(songs: List<Song>) {
         viewModelScope.launch {
             songRepository.insertFullSongList(songs)
+        }
+    }
+
+    fun insertFullAlbumList(albums: List<Album>) {
+        viewModelScope.launch {
+            songRepository.insertFullAlbumList(albums)
         }
     }
 
@@ -122,9 +129,11 @@ class MusiqueViewModel(
     }
 
     fun fetchAlbumList() {
-        _musicListUiState.value = MusicListUiState.Loading
+        albumListUiState = AlbumListUiState.Loading
         viewModelScope.launch {
-            TODO()
+            val albums = songRepository.getAlbumList()
+            albumListUiState = AlbumListUiState.Success(albums = albums)
+            Log.d(TAG, "ALbums set $albumListUiState")
         }
     }
 
