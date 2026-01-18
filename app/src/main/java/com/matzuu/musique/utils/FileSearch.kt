@@ -77,7 +77,6 @@ fun fileSearch(
                 artist = artist,
                 album = album,
                 duration = duration,
-                historyEntryId = null
             )
             res.add(song)
         }

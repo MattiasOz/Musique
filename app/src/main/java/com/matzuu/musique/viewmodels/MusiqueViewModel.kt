@@ -22,6 +22,7 @@ import com.matzuu.musique.database.SongRepository
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.uiStates.AlbumListUiState
+import com.matzuu.musique.uiStates.CurrentPlaylistUiState
 import com.matzuu.musique.uiStates.CurrentSongUiState
 import com.matzuu.musique.uiStates.HistoryListUiState
 import com.matzuu.musique.uiStates.MusicListUiState
@@ -55,6 +56,9 @@ class MusiqueViewModel(
     val musicSubListUiState: StateFlow<MusicListUiState> = _musicSubListUiState.asStateFlow()
 
     var currentSongUiState: CurrentSongUiState by mutableStateOf(CurrentSongUiState.Unset)
+        private set
+
+    var currentPlaylistUiState: CurrentPlaylistUiState by mutableStateOf(CurrentPlaylistUiState.Unset)
         private set
 
     var albumListUiState: AlbumListUiState by mutableStateOf(AlbumListUiState.Loading)
@@ -119,6 +123,12 @@ class MusiqueViewModel(
         }
     }
 
+    fun createHistoryEntry(playlistName: String, songs: List<Song>) {
+        viewModelScope.launch {
+            songRepository.createHistoryEntry(playlistName, songs)
+        }
+    }
+
     fun fetchFullSongList() {
         _musicListUiState.value = MusicListUiState.Loading
         viewModelScope.launch {
@@ -133,7 +143,7 @@ class MusiqueViewModel(
         viewModelScope.launch {
             val albums = songRepository.getAlbumList()
             albumListUiState = AlbumListUiState.Success(albums = albums)
-            Log.d(TAG, "ALbums set $albumListUiState")
+            Log.d(TAG, "Albums set $albumListUiState")
         }
     }
 
@@ -155,19 +165,26 @@ class MusiqueViewModel(
     }
 
     fun setSubSongsFromHistoryEntryId(id: Long) {
+        _musicSubListUiState.value = MusicListUiState.Loading
+        currentPlaylistUiState = CurrentPlaylistUiState.Unset
         viewModelScope.launch(
         ) {
             val songs = songRepository.getHistorySongs(id)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
             Log.d(TAG, "Set sublist songs from history $musicSubListUiState")
+            val historyEntry = songRepository.getHistoryEntry(id)
+            currentPlaylistUiState = CurrentPlaylistUiState.Success(historyEntry.name)
         }
     }
 
     fun setSubSongsFromAlbum(album: String) {
+        _musicSubListUiState.value = MusicListUiState.Loading
+        currentPlaylistUiState = CurrentPlaylistUiState.Unset
         viewModelScope.launch {
             val songs = songRepository.getSongsFromAlbum(album)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
             Log.d(TAG, "Set sublist songs from album ${songs.forEach { "${it.title}\n}"}}")
+            currentPlaylistUiState = CurrentPlaylistUiState.Success(album)
         }
     }
 

@@ -7,6 +7,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.HistoryEntry
+import com.matzuu.musique.models.HistorySongCrossRef
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.utils.SONG_SYNC_WORK_TAG
 import com.matzuu.musique.workers.SongSyncWorker
@@ -16,9 +17,10 @@ interface SongRepository {
     fun enqueueWorker()
     suspend fun insertFullSongList(songs: List<Song>)
     suspend fun insertFullAlbumList(albums: List<Album>)
-    suspend fun insertHistoryEntry(historyEntry: HistoryEntry, songs: List<Song>)
+    suspend fun createHistoryEntry(playlistName: String, songs: List<Song>)
     suspend fun getAlbumList() : List<Album>
     suspend fun getFullSongList(): List<Song>
+    suspend fun getHistoryEntry(historyEntryId: Long): HistoryEntry
     suspend fun getHistoryEntries(): List<HistoryEntry>
     suspend fun getHistorySongs(historyEntryId: Long): List<Song>
     suspend fun getSongsFromAlbum(album: String): List<Song>
@@ -49,15 +51,27 @@ class SongRepositoryImpl(
         musicDao.insertFullAlbumList(albums)
     }
 
-    override suspend fun insertHistoryEntry(
-        historyEntry: HistoryEntry,
+    override suspend fun createHistoryEntry(
+        playlistName: String,
         songs: List<Song>
     ) {
+        val historyEntry = HistoryEntry(
+            name = playlistName,
+            songIdx = 0,
+            timestamp = 0
+        )
         val id = musicDao.insertHistoryEntry(historyEntry)
-        val songs2 = songs.map { song ->
-            song.copy(historyEntryId = id)
+        val historySongCrossRefs: List<HistorySongCrossRef> = songs.map { song ->
+            HistorySongCrossRef(
+                historyEntryId = id,
+                songId = song.id
+            )
         }
-        musicDao.insertHistoryEntrySongs(songs2)
+        musicDao.insertHistorySongCrossRef(historySongCrossRefs)
+        //val songs2 = songs.map { song ->
+        //    song.copy(historyEntryId = id)
+        //}
+        //musicDao.insertHistoryEntrySongs(songs2)
     }
 
     override suspend fun getAlbumList(): List<Album> {
@@ -66,6 +80,10 @@ class SongRepositoryImpl(
 
     override suspend fun getFullSongList(): List<Song> {
         return musicDao.getAllSongs()
+    }
+
+    override suspend fun getHistoryEntry(historyEntryId: Long): HistoryEntry {
+        return musicDao.getHistoryEntry(historyEntryId)
     }
 
     override suspend fun getHistoryEntries(): List<HistoryEntry> {

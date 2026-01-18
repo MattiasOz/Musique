@@ -4,9 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.HistoryEntry
+import com.matzuu.musique.models.HistorySongCrossRef
 import com.matzuu.musique.models.Song
 import kotlinx.serialization.InternalSerializationApi
 
@@ -39,11 +41,21 @@ interface MusicDao {
     @Insert
     suspend fun insertHistoryEntrySongs(songs: List<Song>)
 
+    @Insert
+    suspend fun insertHistorySongCrossRef(historySongCrossRefs: List<HistorySongCrossRef>)
+
+    //@Query("SELECT * FROM historySongCrossRef WHERE historyEntryId = :historyEntryId")
+    //suspend fun getHistorySongCrossRefs(historyEntryId: Long): List<HistorySongCrossRef>
+
+    @Query("SELECT * FROM history WHERE id = :historyEntryId")
+    suspend fun getHistoryEntry(historyEntryId: Long): HistoryEntry
+
     @OptIn(InternalSerializationApi::class)
     @Query("SELECT * FROM history")
     suspend fun getHistoryEntries(): List<HistoryEntry>
 
-    @Query("SELECT * FROM songs WHERE historyEntryId = :historyEntryId")
+    @Transaction
+    @Query("SELECT * FROM songs WHERE id IN (SELECT songId FROM historySongCrossRef WHERE historyEntryId = :historyEntryId)")
     suspend fun getHistorySongs(historyEntryId: Long): List<Song>
 
     @Query("SELECT * FROM songs WHERE album = :album")

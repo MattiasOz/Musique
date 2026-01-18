@@ -103,6 +103,7 @@ private fun TextBar(){
     when(val state = musiqueViewModel.currentSongUiState) {
         is CurrentSongUiState.Success -> {
             //val songInfo = "${state.song.title} \n ${state.song.artist}"
+            // TODO add current playlist viewer
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,

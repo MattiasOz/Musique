@@ -3,6 +3,13 @@ package com.matzuu.musique
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.ui.components.MusiqueBottomBar
@@ -73,7 +81,7 @@ fun MainScreen(
     val onHistoryEntryClick = { historyEntryId: Long ->
         Log.d(TAG, "History entry clicked")
         musiqueViewModel.setSubSongsFromHistoryEntryId(historyEntryId)
-        navController.navigate(Screen.Home.name)
+        navController.navigate(Screen.SubList.name)
     }
 
     val onAlbumClick = { albumName: String ->
@@ -82,10 +90,28 @@ fun MainScreen(
         navController.navigate(Screen.SubList.name)
     }
 
+    val topBarRoute = when(navController.currentBackStackEntryAsState().value?.destination?.route) {
+        Screen.Home.name -> 0
+        Screen.Albums.name -> 1
+        Screen.History.name -> 2
+        else -> -1
+    }
+
     Scaffold(
         topBar = {
             TabTopBar(
                 buttonNames = listOf("Songs", "Albums", "History"),
+                currentRoute = topBarRoute,
+                imageVectorsFilled = listOf(
+                    Icons.Filled.MusicNote,
+                    Icons.Filled.LibraryMusic,
+                    Icons.Filled.History
+                ),
+                imageVectorsOutlined = listOf(
+                    Icons.Outlined.MusicNote,
+                    Icons.Outlined.LibraryMusic,
+                    Icons.Outlined.History
+                ),
                 onClicks = listOf(
                     {
                         Log.d(TAG, "Songs clicked")
@@ -97,6 +123,7 @@ fun MainScreen(
                     },
                     {
                         Log.d(TAG, "History clicked")
+                        navController.navigate(Screen.History.name)
                     }
                 ),
                 updateOnClick = {
@@ -150,7 +177,6 @@ fun MainScreen(
                 SongSubListScreen(
                     musiqueViewModel,
                     onSongClick = onSongClick,
-                    "MyPlayList",
                 )
             }
         }
