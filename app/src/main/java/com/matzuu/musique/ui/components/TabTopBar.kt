@@ -73,7 +73,6 @@ fun TabTopBar(
         ) {
             val smallerValue = if (buttonNames.size < onClicks.size) buttonNames.size else onClicks.size
             items(smallerValue) { index ->
-                Log.d(TAG, "Button $currentRoute")
                 val (imageVector, depressed) = if (index == currentRoute) imageVectorsFilled[index] to true else imageVectorsOutlined[index] to false
                 TabButton(
                     text = buttonNames[index],

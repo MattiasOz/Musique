@@ -72,6 +72,10 @@ class MusiqueViewModel(
     var currentTime by mutableIntStateOf(0)
     var totalTime by mutableIntStateOf(0)
 
+    var currentPlaylist by mutableStateOf<List<Song>>(listOf())
+    var currentPlaylistIdx by mutableIntStateOf(0)
+
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val pagedSongsFlow: Flow<PagingData<Song>> = _musicListUiState

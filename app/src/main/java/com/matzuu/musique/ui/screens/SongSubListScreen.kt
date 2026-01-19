@@ -32,7 +32,7 @@ private const val TAG = "SongSubListScreen"
 @Composable
 fun SongSubListScreen(
     musiqueViewModel: MusiqueViewModel,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (List<Song>, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -87,6 +87,7 @@ fun SongSubListScreen(
 
                 ListScreen(
                     songs = songs,
+                    allSongs = allSongs.songs,
                     onSongClick = onSongClick,
                     modifier = modifier
                 )

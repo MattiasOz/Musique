@@ -32,19 +32,21 @@ private const val TAG = "SongListScreen"
 @Composable
 fun SongListScreen(
     musiqueViewModel: MusiqueViewModel,
-    onSongClick: (Song) -> Unit,
+    onSongClick: (List<Song>, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val songs = musiqueViewModel.pagedSongsFlow.collectAsLazyPagingItems()
-    when (musiqueViewModel.musicListUiState.collectAsState().value) {
+    when (val state = musiqueViewModel.musicListUiState.collectAsState().value) {
         is MusicListUiState.Success -> {
-            ListScreen(
-                songs = songs,
-                onSongClick = onSongClick,
-                modifier = modifier
-            )
             if (songs.itemCount <= 0) {
                 Text(text = "No songs found")
+            } else {
+                ListScreen(
+                    songs = songs,
+                    allSongs = state.songs,
+                    onSongClick = onSongClick,
+                    modifier = modifier
+                )
             }
         }
         MusicListUiState.Loading -> {

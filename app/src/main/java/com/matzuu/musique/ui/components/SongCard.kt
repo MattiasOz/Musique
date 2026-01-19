@@ -29,14 +29,13 @@ private const val TAG = "SongCard"
 @Composable
 fun SongCard(
     song: Song,
-    onClick: (Song) -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = {
-            Log.d(TAG, "Clicked on Song Card")
-            Log.d(TAG, "Song: $song")
-            onClick(song)
+            Log.d(TAG, "Song clicked $song")
+            onClick()
         },
         modifier = modifier
             .fillMaxWidth()

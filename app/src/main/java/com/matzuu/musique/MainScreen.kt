@@ -1,8 +1,12 @@
 package com.matzuu.musique
 
 import android.util.Log
+import androidx.activity.result.launch
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -13,6 +17,9 @@ import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -32,11 +39,12 @@ import com.matzuu.musique.ui.screens.SongListScreen
 import com.matzuu.musique.ui.screens.SongSubListScreen
 import com.matzuu.musique.viewmodels.MusiqueViewModel
 import com.matzuu.musique.workers.SongSyncWorker
+import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MainScreen"
 
-@OptIn(InternalSerializationApi::class)
+@OptIn(InternalSerializationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
@@ -48,8 +56,29 @@ fun MainScreen(
 
     val player = musiqueViewModel.mediaPlayer
 
-    val onSongClick = { song: Song ->
-        Log.d(TAG, "Song clicked: $song")
+    player.setOnCompletionListener { player ->
+        val songs = musiqueViewModel.currentPlaylist
+        val idx = musiqueViewModel.currentPlaylistIdx
+        player.pause()
+        if (idx >= songs.size - 1) {
+            musiqueViewModel.isPlaying = false
+            return@setOnCompletionListener
+        }
+        val nextSong = songs[idx+1]
+        player.reset()
+        player.setDataSource(nextSong.path)
+        player.prepare() //TODO Async?
+        player.start()
+        musiqueViewModel.isPlaying = true
+        musiqueViewModel.setCurrentSong(nextSong)
+        musiqueViewModel.currentPlaylistIdx += 1
+    }
+
+    val onSongClick = { songs: List<Song>, idx: Int ->
+        Log.d(TAG, "Song clicked ${songs[idx]}")
+        musiqueViewModel.currentPlaylist = songs
+        musiqueViewModel.currentPlaylistIdx = idx
+        val song = songs[idx]
         player.stop()
         player.reset()
         player.setDataSource(song.path)
@@ -58,6 +87,16 @@ fun MainScreen(
         musiqueViewModel.isPlaying = true
         musiqueViewModel.setCurrentSong(song)
     }
+    /*val onSongClick = { song: Song ->
+        Log.d(TAG, "Song clicked: $song")
+        player.stop()
+        player.reset()
+        player.setDataSource(song.path)
+        player.prepare() //TODO Async?
+        player.start()
+        musiqueViewModel.isPlaying = true
+        musiqueViewModel.setCurrentSong(song)
+    }*/
     val changeSongSliderPos = { position: Float ->
         Log.d(TAG, "Slider position changed to $position")
         Log.d(TAG, "Current position: ${player.currentPosition/1000}")
@@ -95,6 +134,55 @@ fun MainScreen(
         Screen.Albums.name -> 1
         Screen.History.name -> 2
         else -> -1
+    }
+
+    // --- Pager Setup ---
+    val pagerScreens = listOf(Screen.Home, Screen.Albums, Screen.History)
+    val pagerState = rememberPagerState(pageCount = { pagerScreens.size })
+    val coroutineScope = rememberCoroutineScope()
+
+    // This effect syncs the Pager's state to the NavController
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (!pagerState.isScrollInProgress) {
+            navController.navigate(pagerScreens[pagerState.currentPage].name) {
+                // Avoid multiple copies of the same destination when re-selecting the same item
+                launchSingleTop = true
+                // Restore state when re-selecting a previously selected item
+                restoreState = true
+            }
+        }
+    }
+
+    // This effect syncs the NavController's state to the Pager
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(navBackStackEntry) {
+        val currentPageIndex = pagerScreens.indexOfFirst { it.name == navBackStackEntry?.destination?.route }
+        if (currentPageIndex != -1 && currentPageIndex != pagerState.currentPage) {
+            coroutineScope.launch {
+                pagerState.animateScrollToPage(currentPageIndex)
+            }
+        }
+    }
+    // --- End Pager Setup ---
+    val pager = @Composable {
+        HorizontalPager(state = pagerState) { page ->
+            when (page) {
+                0 -> SongListScreen(
+                    musiqueViewModel,
+                    onSongClick = onSongClick
+                )
+
+                1 -> AlbumGridScreen(
+                    musiqueViewModel,
+                    onClick = onAlbumClick
+                )
+
+                2 -> HistoryScreen(
+                    musiqueViewModel,
+                    onClick = onHistoryEntryClick
+                )
+            }
+        }
     }
 
     Scaffold(
@@ -156,23 +244,32 @@ fun MainScreen(
                 .padding(innerPadding)
         ) {
             composable(route = Screen.Home.name) {
-                SongListScreen(
-                    musiqueViewModel,
-                    onSongClick = onSongClick
-                )
+                pager()
             }
             composable(route = Screen.Albums.name) {
-                AlbumGridScreen(
-                    musiqueViewModel,
-                    onClick = onAlbumClick
-                )
+                pager()
             }
             composable(route = Screen.History.name) {
-                HistoryScreen(
-                    musiqueViewModel,
-                    onClick = onHistoryEntryClick
-                )
+                pager()
             }
+            //composable(route = Screen.Home.name) {
+            //    SongListScreen(
+            //        musiqueViewModel,
+            //        onSongClick = onSongClick
+            //    )
+            //}
+            //composable(route = Screen.Albums.name) {
+            //    AlbumGridScreen(
+            //        musiqueViewModel,
+            //        onClick = onAlbumClick
+            //    )
+            //}
+            //composable(route = Screen.History.name) {
+            //    HistoryScreen(
+            //        musiqueViewModel,
+            //        onClick = onHistoryEntryClick
+            //    )
+            //}
             composable(route = Screen.SubList.name) {
                 SongSubListScreen(
                     musiqueViewModel,

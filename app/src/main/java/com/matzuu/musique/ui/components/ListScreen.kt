@@ -1,5 +1,6 @@
 package com.matzuu.musique.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +11,13 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.matzuu.musique.models.Song
 
+private const val TAG = "ListScreen"
+
 @Composable
 fun ListScreen(
-    songs: LazyPagingItems<Song>,
-    onSongClick: (Song) -> Unit,
+    songs: LazyPagingItems<Song>, //TODO remove this? If things work okay anyway
+    allSongs: List<Song>,
+    onSongClick: (List<Song>, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -23,15 +27,20 @@ fun ListScreen(
         modifier = modifier
     ) {
         items(
-            count = songs.itemCount,
-            key = songs.itemKey { it.id },
+            //count = songs.itemCount,
+            //key = songs.itemKey { it.id },
+            count = allSongs.size,
             contentType = { "song_card" }
         ) { idx ->
-            val song = songs[idx]
+            //val song = songs[idx]
+            val song = allSongs[idx]
+            val onClick = {
+                onSongClick(allSongs, idx)
+            }
             if (song != null) {
                 SongCard(
                     song = song,
-                    onClick = onSongClick
+                    onClick = onClick
                 )
             }
         }
