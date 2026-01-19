@@ -45,6 +45,7 @@ fun SongListScreen(
                     songs = songs,
                     allSongs = state.songs,
                     onSongClick = onSongClick,
+                    scrollState = musiqueViewModel.homeListScrollState,
                     modifier = modifier
                 )
             }

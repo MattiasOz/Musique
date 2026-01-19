@@ -2,6 +2,7 @@ package com.matzuu.musique
 
 import android.util.Log
 import androidx.activity.result.launch
+import androidx.compose.animation.EnterTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavOptions
+import androidx.navigation.Navigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -202,16 +205,32 @@ fun MainScreen(
                 ),
                 onClicks = listOf(
                     {
-                        Log.d(TAG, "Songs clicked")
-                        navController.navigate(Screen.Home.name)
+                        navController.navigate(
+                            route = Screen.Home.name,
+                            navOptions = NavOptions.Builder()
+                                .setPopUpTo(
+                                    route = Screen.Home.name,
+                                    inclusive = true
+                                ).build()
+                        )
                     },
                     {
-                        Log.d(TAG, "Albums clicked")
-                        navController.navigate(Screen.Albums.name)
+                        navController.navigate(Screen.Albums.name,
+                            navOptions = NavOptions.Builder()
+                            .setPopUpTo(
+                                route = Screen.Albums.name,
+                                inclusive = true
+                            ).build()
+                        )
                     },
                     {
-                        Log.d(TAG, "History clicked")
-                        navController.navigate(Screen.History.name)
+                        navController.navigate(Screen.History.name,
+                            navOptions = NavOptions.Builder()
+                            .setPopUpTo(
+                                route = Screen.History.name,
+                                inclusive = true
+                            ).build()
+                        )
                     }
                 ),
                 updateOnClick = {
@@ -252,24 +271,26 @@ fun MainScreen(
             composable(route = Screen.History.name) {
                 pager()
             }
-            //composable(route = Screen.Home.name) {
-            //    SongListScreen(
-            //        musiqueViewModel,
-            //        onSongClick = onSongClick
-            //    )
-            //}
-            //composable(route = Screen.Albums.name) {
-            //    AlbumGridScreen(
-            //        musiqueViewModel,
-            //        onClick = onAlbumClick
-            //    )
-            //}
-            //composable(route = Screen.History.name) {
-            //    HistoryScreen(
-            //        musiqueViewModel,
-            //        onClick = onHistoryEntryClick
-            //    )
-            //}
+            /*
+            composable(route = Screen.Home.name) {
+                SongListScreen(
+                    musiqueViewModel,
+                    onSongClick = onSongClick
+                )
+            }
+            composable(route = Screen.Albums.name) {
+                AlbumGridScreen(
+                    musiqueViewModel,
+                    onClick = onAlbumClick
+                )
+            }
+            composable(route = Screen.History.name) {
+                HistoryScreen(
+                    musiqueViewModel,
+                    onClick = onHistoryEntryClick
+                )
+            }
+             */
             composable(route = Screen.SubList.name) {
                 SongSubListScreen(
                     musiqueViewModel,

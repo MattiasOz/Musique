@@ -2,6 +2,9 @@ package com.matzuu.musique.viewmodels
 
 import android.media.MediaPlayer
 import android.util.Log
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,6 +77,10 @@ class MusiqueViewModel(
 
     var currentPlaylist by mutableStateOf<List<Song>>(listOf())
     var currentPlaylistIdx by mutableIntStateOf(0)
+
+    val homeListScrollState by mutableStateOf(LazyListState(0))
+    val albumGridScrollState by mutableStateOf(LazyGridState(0))
+
 
 
 
