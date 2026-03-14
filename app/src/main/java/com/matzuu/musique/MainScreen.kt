@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigator
+import androidx.navigation.PopUpToBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -147,11 +148,12 @@ fun MainScreen(
     // This effect syncs the Pager's state to the NavController
     LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
         if (!pagerState.isScrollInProgress) {
-            navController.navigate(pagerScreens[pagerState.currentPage].name) {
-                // Avoid multiple copies of the same destination when re-selecting the same item
+            navController.navigate(
+                route = pagerScreens[pagerState.currentPage].name,
+            ) {
                 launchSingleTop = true
-                // Restore state when re-selecting a previously selected item
                 restoreState = true
+                popUpTo(pagerScreens[pagerState.currentPage].name)
             }
         }
     }

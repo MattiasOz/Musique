@@ -6,6 +6,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("/home/mattias/Android/musiqueKey.jks")
+            storePassword = "providence"
+            keyAlias = "key0"
+            keyPassword = "providence"
+        }
+    }
     namespace = "com.matzuu.musique"
     compileSdk = 34
 
@@ -23,12 +31,21 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        release {
+            isMinifyEnabled = true // optimization thing
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
