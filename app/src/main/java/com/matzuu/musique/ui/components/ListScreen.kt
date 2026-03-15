@@ -22,7 +22,7 @@ private const val TAG = "ListScreen"
 
 @Composable
 fun ListScreen(
-    songs: LazyPagingItems<Song>, //TODO remove this? If things work okay anyway
+    songs: LazyPagingItems<Song>?, //TODO remove this? If things work okay anyway
     allSongs: List<Song>,
     onSongClick: (List<Song>, Int) -> Unit,
     scrollState: LazyListState = rememberLazyListState(),
