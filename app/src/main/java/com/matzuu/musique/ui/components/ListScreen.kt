@@ -22,9 +22,10 @@ private const val TAG = "ListScreen"
 
 @Composable
 fun ListScreen(
-    songs: LazyPagingItems<Song>, //TODO remove this? If things work okay anyway
+    songs: LazyPagingItems<Song>?, //TODO remove this? If things work okay anyway
     allSongs: List<Song>,
     onSongClick: (List<Song>, Int) -> Unit,
+    selectedSongUrl: String,
     scrollState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
@@ -49,7 +50,8 @@ fun ListScreen(
             if (song != null) {
                 SongCard(
                     song = song,
-                    onClick = onClick
+                    onClick = onClick,
+                    isCurrent = song.path == selectedSongUrl
                 )
             }
         }

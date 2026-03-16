@@ -2,33 +2,19 @@ package com.matzuu.musique.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.outlined.Pause
-import androidx.compose.material.icons.outlined.PauseCircleFilled
-import androidx.compose.material.icons.outlined.PauseCircleOutline
 import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,12 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.matzuu.musique.uiStates.CurrentSongUiState
 import com.matzuu.musique.viewmodels.MusiqueViewModel
+import kotlinx.coroutines.Job
 import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MusiqueBottomBar"
@@ -52,6 +38,7 @@ fun MusiqueBottomBar(
     sliderValue: Float = 0.0f,
     onValueChange: (Float) -> Unit,
     onPlayPauseClick: () -> Unit,
+    onTextClick: () -> Job,
     modifier: Modifier = Modifier
 ){
     val musiqueViewModel: MusiqueViewModel = viewModel(factory = MusiqueViewModel.Factory)
@@ -74,7 +61,9 @@ fun MusiqueBottomBar(
                 valueRange = 0f..1f,
                 enabled = enabled
             )
-            TextBar()
+            TextBar(
+                onClick = onTextClick
+            )
         }
         IconButton(
             onClick = {
@@ -98,16 +87,21 @@ fun MusiqueBottomBar(
 
 @OptIn(ExperimentalFoundationApi::class, InternalSerializationApi::class)
 @Composable
-private fun TextBar(){
+private fun TextBar(
+    onClick: () -> Job,
+){
     val musiqueViewModel: MusiqueViewModel = viewModel(factory = MusiqueViewModel.Factory)
     when(val state = musiqueViewModel.currentSongUiState) {
         is CurrentSongUiState.Success -> {
             //val songInfo = "${state.song.title} \n ${state.song.artist}"
-            // TODO add current playlist viewer
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
+                    .clickable(true) {
+                        Log.d(TAG, "Song clicked")
+                        onClick()
+                    }
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -210,14 +204,4 @@ private fun CurrentTime(
     //    //        .weight(1f)
     //    //)
     //}
-}
-
-@Preview
-@Composable
-fun PreviewMusiqueBottomBar(){
-    MusiqueBottomBar(
-        sliderValue = 0.5f,
-        onValueChange = {},
-        onPlayPauseClick = {},
-    )
 }

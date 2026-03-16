@@ -80,6 +80,7 @@ class MusiqueViewModel(
 
     val homeListScrollState by mutableStateOf(LazyListState(0))
     val albumGridScrollState by mutableStateOf(LazyGridState(0))
+    val currentPlaylistScrollState = mutableStateOf(LazyListState(0))
 
 
 
@@ -214,6 +215,14 @@ class MusiqueViewModel(
         ) {
             Log.d(TAG, "Song set to $song")
             currentSongUiState = CurrentSongUiState.Success(song = song)
+        }
+    }
+
+    fun setCurrentPlaylistScrollState(idx: Int) {
+        viewModelScope.launch {
+            Log.d(TAG, "Changing scrollstate to $idx")
+            currentPlaylistScrollState.value = LazyListState(idx)
+            Log.d(TAG, "Scrollstate changed to ${currentPlaylistScrollState.value}")
         }
     }
 
