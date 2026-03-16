@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +32,7 @@ private const val TAG = "SongCard"
 fun SongCard(
     song: Song,
     onClick: () -> Unit,
+    isCurrent: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -37,6 +40,13 @@ fun SongCard(
             Log.d(TAG, "Song clicked $song")
             onClick()
         },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCurrent) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
         modifier = modifier
             .fillMaxWidth()
     ) {
@@ -93,19 +103,20 @@ fun SongCard(
     }
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//private fun SongCardPreview() {
-//val song = Song(2, "Den bästa och absoluta bnästastea låten som någon sin har skrivits av ett marsvin och ingen kan säga något annat då de aldrig har hört den", "/song.s", "Artist2", "Album1", 2)
-//    val song2 = Song(2, "Song2", "/song.mp4", "Artist2", "Album1", 65)
-//    Column {
-//        SongCard(
-//            song = song,
-//            {}
-//        )
-//        SongCard(
-//            song = song2,
-//            {}
-//        )
-//    }
-//}
+@Preview(showBackground = true)
+@Composable
+private fun SongCardPreview() {
+val song = Song(2, "Den bästa och absoluta bnästastea låten som någon sin har skrivits av ett marsvin och ingen kan säga något annat då de aldrig har hört den", "/song.s", "Artist2", "Album1", 2)
+    val song2 = Song(2, "Song2", "/song.mp4", "Artist2", "Album1", 65)
+    Column {
+        SongCard(
+            song = song,
+            {},
+            isCurrent = true
+        )
+        SongCard(
+            song = song2,
+            {}
+        )
+    }
+}

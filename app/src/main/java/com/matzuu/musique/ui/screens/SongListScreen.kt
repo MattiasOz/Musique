@@ -41,11 +41,21 @@ fun SongListScreen(
             if (songs.itemCount <= 0) {
                 Text(text = "No songs found")
             } else {
+                val path = try {
+                    val pl = musiqueViewModel.currentPlaylist
+                    val idx = musiqueViewModel.currentPlaylistIdx
+                    val song = pl[idx]
+                    song.path
+                } catch (e: IndexOutOfBoundsException) {
+                    Log.e(TAG, "Index out of bounds, returning empty string", e)
+                    ""
+                }
                 ListScreen(
                     songs = songs,
                     allSongs = state.songs,
                     onSongClick = onSongClick,
                     scrollState = musiqueViewModel.homeListScrollState,
+                    selectedSongUrl = path,
                     modifier = modifier
                 )
             }

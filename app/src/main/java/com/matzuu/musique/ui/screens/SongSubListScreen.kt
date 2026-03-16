@@ -85,10 +85,20 @@ fun SongSubListScreen(
                     }
                 }
 
+                val path = try {
+                    val pl = musiqueViewModel.currentPlaylist
+                    val idx = musiqueViewModel.currentPlaylistIdx
+                    val song = pl[idx]
+                    song.path
+                } catch (e: IndexOutOfBoundsException) {
+                    Log.e(TAG, "Index out of bounds, returning empty string", e)
+                    ""
+                }
                 ListScreen(
                     songs = songs,
                     allSongs = allSongs.songs,
                     onSongClick = onSongClick,
+                    selectedSongUrl = path,
                     modifier = modifier
                 )
             }

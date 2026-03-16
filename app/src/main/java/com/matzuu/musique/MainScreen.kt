@@ -246,7 +246,6 @@ fun MainScreen(
                         }
                     }
             )
-            //TODO add current playlist screen here
             CurrentPlaylistScreen(
                 musiqueViewModel,
                 onSongClick = onSongClickInPlaylist, // TODO maybe change the function to skip playlist change
