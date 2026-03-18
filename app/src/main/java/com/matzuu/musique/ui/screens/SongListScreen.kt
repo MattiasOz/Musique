@@ -45,6 +45,7 @@ fun SongListScreen(
                     val pl = musiqueViewModel.currentPlaylist
                     val idx = musiqueViewModel.currentPlaylistIdx
                     val song = pl[idx]
+                    Log.d(TAG, "SongTitle: ${song.path}")
                     song.path
                 } catch (e: IndexOutOfBoundsException) {
                     Log.e(TAG, "Index out of bounds, returning empty string", e)
