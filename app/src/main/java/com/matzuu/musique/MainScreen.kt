@@ -21,6 +21,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -49,11 +53,10 @@ import com.matzuu.musique.ui.screens.SongSubListScreen
 import com.matzuu.musique.viewmodels.MusiqueViewModel
 import com.matzuu.musique.workers.SongSyncWorker
 import kotlinx.coroutines.launch
-import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MainScreen"
 
-@OptIn(InternalSerializationApi::class, ExperimentalFoundationApi::class,
+@OptIn(ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class
 )
 @Composable
@@ -61,11 +64,13 @@ fun MainScreen(
     modifier: Modifier = Modifier,
 ) {
     val musiqueViewModel: MusiqueViewModel = viewModel(factory = MusiqueViewModel.Factory)
-    SongSyncWorker.viewmodel = musiqueViewModel
-    //musiqueViewModel.scheduleWorker()
-    musiqueViewModel.updateValues()
+    LaunchedEffect(musiqueViewModel) {
+        SongSyncWorker.viewmodel = musiqueViewModel
+        //musiqueViewModel.scheduleWorker()
+        //musiqueViewModel.updateValues()
+    }
 
-    val player = musiqueViewModel.mediaPlayer
+    val mediaController = musiqueViewModel.mediaController
     val sheetState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
             initialValue = SheetValue.PartiallyExpanded
@@ -76,7 +81,8 @@ fun MainScreen(
         targetValue = sheetSize
     )
 
-    player.setOnCompletionListener { player ->
+    /*
+    mediaController.setOnCompletionListener { player ->
         val songs = musiqueViewModel.currentPlaylist
         val idx = musiqueViewModel.currentPlaylistIdx
         player.pause()
@@ -93,32 +99,156 @@ fun MainScreen(
         musiqueViewModel.setCurrentSong(nextSong)
         musiqueViewModel.currentPlaylistIdx += 1
     }
+    */
+    DisposableEffect(mediaController) {
+        val listener = object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
 
+                Log.d(TAG, "onMediaItemTransition, reason $reason")
+                /*
+                when(reason) {
+                    // media has been repeated
+                    Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> {}
+                    // automatically moving to the next item
+                    Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {}
+                    // manual "seek" meaning >| button is pressed
+                    Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {}
+                    // the playlist has changed
+                    Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> return
+                    else -> {
+                        Log.e(TAG, "Unknown reason for media item transition")
+                        return
+                    }
+                }
+                 */
+                if (mediaItem == null) {
+                    musiqueViewModel.unsetCurrentSong()
+                    musiqueViewModel.currentPlaylistIdx = -1
+                    return@onMediaItemTransition
+                }
+
+                val songs = musiqueViewModel.currentPlaylist
+                val idx = musiqueViewModel.currentPlaylistIdx
+                mediaController?.run {
+                    val nextIdx = mediaController.currentMediaItemIndex
+                    if (nextIdx >= songs.size) {
+                        return@run
+                    }
+                    val nextSong = songs[nextIdx]
+                    musiqueViewModel.setCurrentSong(nextSong)
+                    musiqueViewModel.currentPlaylistIdx = nextIdx
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                super.onIsPlayingChanged(isPlaying)
+                musiqueViewModel.isPlaying = isPlaying
+            }
+        }.also {
+            mediaController?.addListener(it)
+        }
+
+        onDispose {
+            mediaController?.removeListener(listener)
+        }
+    }
+
+
+    /*
     val onSongClick = { songs: List<Song>, idx: Int ->
         Log.d(TAG, "Song clicked ${songs[idx]}")
         musiqueViewModel.currentPlaylist = songs
         musiqueViewModel.currentPlaylistIdx = idx
         val song = songs[idx]
-        player.stop()
-        player.reset()
-        player.setDataSource(song.path)
-        player.prepare() //TODO Async?
-        player.start()
+        mediaController.stop()
+        mediaController.reset()
+        mediaController.setDataSource(song.path)
+        mediaController.prepare() //TODO Async?
+        mediaController.start()
         musiqueViewModel.isPlaying = true
         musiqueViewModel.setCurrentSong(song)
         musiqueViewModel.setCurrentPlaylistScrollState(idx)
     }
+     */
+    val onSongClick: (songs: List<Song>, idx: Int) -> Unit = { songs: List<Song>, idx: Int ->
+        Log.d(TAG, "Song clicked ${songs[idx]}")
+
+        val mediaItems: List<MediaItem> = songs.map { song ->
+            MediaItem.Builder()
+                .setMediaId(song.id.toString())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(song.title)
+                        .setArtist(song.artist)
+                        .build()
+                )
+                .setUri(song.path)
+                .build()
+        }
+        mediaController?.run {
+            musiqueViewModel.currentPlaylist = songs
+            musiqueViewModel.currentPlaylistIdx = idx
+            stop()
+            setMediaItems(mediaItems, idx, 0)
+            prepare()
+            play()
+            //musiqueViewModel.isPlaying = true
+            musiqueViewModel.setCurrentSong(songs[idx])
+            musiqueViewModel.setCurrentPlaylistScrollState(idx)
+        }
+    }
+    /*
     val onSongClickInPlaylist = { idx: Int ->
         musiqueViewModel.currentPlaylistIdx = idx
         val song = musiqueViewModel.currentPlaylist[idx]
-        player.stop()
-        player.reset()
-        player.setDataSource(song.path)
-        player.prepare() //TODO Async?
-        player.start()
+        mediaController.stop()
+        mediaController.reset()
+        mediaController.setDataSource(song.path)
+        mediaController.prepare() //TODO Async?
+        mediaController.start()
         musiqueViewModel.isPlaying = true
         musiqueViewModel.setCurrentSong(song)
-        musiqueViewModel.setCurrentPlaylistScrollState(idx)
+    }
+     */
+    val onSongClickInPlaylist: (songs: List<Song>, idx: Int) -> Unit = { songs: List<Song>, idx: Int ->
+        musiqueViewModel.currentPlaylistIdx = idx
+        val song = musiqueViewModel.currentPlaylist[idx]
+        /*
+        val mediaItem = MediaItem.Builder()
+            .setMediaId(song.id.toString())
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(song.title)
+                    .setArtist(song.artist)
+                    .build()
+            )
+            .setUri(song.path)
+            .build()
+         */
+        mediaController?.run {
+            //stop()
+            if (mediaItemCount <= 0) { // playlist is cleared and needs to be reinitialized
+                val mediaItems: List<MediaItem> = songs.map { song ->
+                    MediaItem.Builder()
+                        .setMediaId(song.id.toString())
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(song.title)
+                                .setArtist(song.artist)
+                                .build()
+                        )
+                        .setUri(song.path)
+                        .build()
+                }
+                setMediaItems(mediaItems)
+                prepare()
+            }
+            seekToDefaultPosition(idx)
+            play()
+            //musiqueViewModel.isPlaying = true
+            musiqueViewModel.setCurrentSong(song)
+        }
     }
     /*val onSongClick = { song: Song ->
         Log.d(TAG, "Song clicked: $song")
@@ -130,21 +260,22 @@ fun MainScreen(
         musiqueViewModel.isPlaying = true
         musiqueViewModel.setCurrentSong(song)
     }*/
-    val changeSongSliderPos = { position: Float ->
-        Log.d(TAG, "Slider position changed to $position")
-        Log.d(TAG, "Current position: ${player.currentPosition/1000}")
-        Log.d(TAG, "Duration: ${player.duration/1000}")
-        Log.d(TAG, "Is playing: ${player.timestamp}")
-        player.seekTo((position * player.duration).toInt())
-        musiqueViewModel.songSliderPosition = position
+    val changeSongSliderPos: (Float) -> Unit = { position: Float ->
+        mediaController?.run {
+            seekTo((position * duration).toLong())
+            musiqueViewModel.songSliderPosition = position
+        }
     }
-    val onPlayPauseClick = {
-        if(player.isPlaying) {
-            player.pause()
-            musiqueViewModel.isPlaying = false
-        } else {
-            player.start()
-            musiqueViewModel.isPlaying = true
+    
+    val onPlayPauseClick: () -> Unit = {
+        mediaController?.let { controller ->
+            if(controller.isPlaying) {
+                controller.pause()
+                //musiqueViewModel.isPlaying = false
+            } else {
+                controller.play()
+                //musiqueViewModel.isPlaying = true
+            }
         }
     }
 
@@ -248,7 +379,7 @@ fun MainScreen(
             )
             CurrentPlaylistScreen(
                 musiqueViewModel,
-                onSongClick = onSongClickInPlaylist, // TODO maybe change the function to skip playlist change
+                onSongClick = onSongClickInPlaylist,
                 scrollState = musiqueViewModel.currentPlaylistScrollState.value
             )
         },

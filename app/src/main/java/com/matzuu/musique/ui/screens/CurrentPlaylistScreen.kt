@@ -14,7 +14,7 @@ private const val TAG = "CurrentPlaylistScreen"
 @Composable
 fun CurrentPlaylistScreen(
     musiqueViewModel: MusiqueViewModel,
-    onSongClick: (Int) -> Unit,
+    onSongClick: (List<Song>, Int) -> Unit,
     scrollState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
@@ -31,9 +31,7 @@ fun CurrentPlaylistScreen(
     ListScreen(
         songs = null,
         allSongs = playlist,
-        onSongClick = { _: List<Song>, idx: Int ->
-            onSongClick(idx)
-        },
+        onSongClick = onSongClick,
         scrollState = scrollState,
         selectedSongUrl = songPath,
         modifier = modifier

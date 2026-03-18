@@ -3,6 +3,7 @@
 buildscript {
     extra.apply{
         set("room_version", "2.6.0")
+        set("media3_version", "1.4.1")
     }
 }
 

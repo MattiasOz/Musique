@@ -100,6 +100,11 @@ dependencies {
     // SERIALIZATION
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // Updated to a more recent version
 
+    //implementation(libs.androidx.media3.session)
+    implementation("androidx.media3:media3-session:${rootProject.extra["media3_version"]}")
+    //implementation(libs.androidx.media3.exoplayer)
+    implementation("androidx.media3:media3-exoplayer:${rootProject.extra["media3_version"]}")
+
     // TESTING
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

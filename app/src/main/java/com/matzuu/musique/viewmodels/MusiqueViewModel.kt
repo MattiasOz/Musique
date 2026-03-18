@@ -1,13 +1,14 @@
 package com.matzuu.musique.viewmodels
 
+import android.content.ComponentName
 import android.media.MediaPlayer
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -16,14 +17,18 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.google.common.util.concurrent.MoreExecutors
 import com.matzuu.musique.MusiqueApplication
 import com.matzuu.musique.database.SongRepository
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.Song
+import com.matzuu.musique.services.MediaPlayerService
 import com.matzuu.musique.uiStates.AlbumListUiState
 import com.matzuu.musique.uiStates.CurrentPlaylistUiState
 import com.matzuu.musique.uiStates.CurrentSongUiState
@@ -40,13 +45,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import kotlinx.serialization.InternalSerializationApi
 
 private const val TAG = "MusiqueViewModel"
 
 class MusiqueViewModel(
     private val songRepository: SongRepository,
-    val mediaPlayer: MediaPlayer
+    initialMediaController: MediaController? = null
 ) : ViewModel() {
 
     //var musicListUiState: MusicListUiState by mutableStateOf(MusicListUiState.Loading)
@@ -72,15 +76,18 @@ class MusiqueViewModel(
 
     var songSliderPosition by mutableFloatStateOf(0f)
     var isPlaying by mutableStateOf(false)
-    var currentTime by mutableIntStateOf(0)
-    var totalTime by mutableIntStateOf(0)
+    var currentTime by mutableLongStateOf(0)
+    var totalTime by mutableLongStateOf(0)
 
     var currentPlaylist by mutableStateOf<List<Song>>(listOf())
-    var currentPlaylistIdx by mutableIntStateOf(0)
+    var currentPlaylistIdx by mutableIntStateOf(-1)
 
     val homeListScrollState by mutableStateOf(LazyListState(0))
     val albumGridScrollState by mutableStateOf(LazyGridState(0))
     val currentPlaylistScrollState = mutableStateOf(LazyListState(0))
+
+    var mediaController: MediaController? by mutableStateOf(initialMediaController)
+        internal set
 
 
 
@@ -121,6 +128,7 @@ class MusiqueViewModel(
         fetchFullSongList()
         fetchAlbumList()
         updateHistoryEntries()
+        updateValues()
     }
 
     fun insertFullSongList(songs: List<Song>) {
@@ -155,7 +163,6 @@ class MusiqueViewModel(
         viewModelScope.launch {
             val albums = songRepository.getAlbumList()
             albumListUiState = AlbumListUiState.Success(albums = albums)
-            Log.d(TAG, "Albums set $albumListUiState")
         }
     }
 
@@ -164,7 +171,6 @@ class MusiqueViewModel(
             context = Dispatchers.IO
         ) {
             _musicListUiState.value = MusicListUiState.Success(songs = songs)
-            Log.d(TAG, "Set songs $musicListUiState")
         }
     }
 
@@ -172,7 +178,6 @@ class MusiqueViewModel(
         viewModelScope.launch(
         ) {
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
-            Log.d(TAG, "Set sublist songs $musicSubListUiState")
         }
     }
 
@@ -183,7 +188,6 @@ class MusiqueViewModel(
         ) {
             val songs = songRepository.getHistorySongs(id)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
-            Log.d(TAG, "Set sublist songs from history $musicSubListUiState")
             val historyEntry = songRepository.getHistoryEntry(id)
             currentPlaylistUiState = CurrentPlaylistUiState.Success(historyEntry.name)
         }
@@ -195,7 +199,6 @@ class MusiqueViewModel(
         viewModelScope.launch {
             val songs = songRepository.getSongsFromAlbum(album)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
-            Log.d(TAG, "Set sublist songs from album ${songs.forEach { "${it.title}\n}"}}")
             currentPlaylistUiState = CurrentPlaylistUiState.Success(album)
         }
     }
@@ -205,11 +208,11 @@ class MusiqueViewModel(
             context = Dispatchers.IO
         ) {
             albumListUiState = AlbumListUiState.Success(albums = albums)
-            Log.d(TAG, "Set albums $albumListUiState")
         }
     }
 
     fun setCurrentSong(song: Song) {
+        currentSongUiState = CurrentSongUiState.Unset
         viewModelScope.launch(
             context = Dispatchers.IO
         ) {
@@ -218,11 +221,13 @@ class MusiqueViewModel(
         }
     }
 
+    fun unsetCurrentSong() {
+        currentSongUiState = CurrentSongUiState.Unset
+    }
+
     fun setCurrentPlaylistScrollState(idx: Int) {
         viewModelScope.launch {
-            Log.d(TAG, "Changing scrollstate to $idx")
             currentPlaylistScrollState.value = LazyListState(idx)
-            Log.d(TAG, "Scrollstate changed to ${currentPlaylistScrollState.value}")
         }
     }
 
@@ -241,13 +246,23 @@ class MusiqueViewModel(
 
     fun updateValues(){
         viewModelScope.launch {
-            while (isPlaying) {
-                songSliderPosition = mediaPlayer.currentPosition.toFloat() / mediaPlayer.duration.toFloat()
-                currentTime = mediaPlayer.currentPosition
-                totalTime = mediaPlayer.duration
+            while (true) {
+                if (isPlaying) {
+                    //songSliderPosition = mediaPlayer.currentPosition.toFloat() / mediaPlayer.duration.toFloat()
+                    mediaController?.let { controller ->
+                        songSliderPosition = controller.currentPosition.toFloat() / controller.duration.coerceAtLeast(1L).toFloat()
+                        currentTime = controller.currentPosition
+                        totalTime = controller.duration
+                    }
+                }
                 delay(100)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mediaController?.release()
     }
 
     companion object {
@@ -255,11 +270,19 @@ class MusiqueViewModel(
             initializer {
                 val application = this[APPLICATION_KEY] as MusiqueApplication
                 val songRepository = application.container.songRepository
-                val player = MediaPlayer()
-                MusiqueViewModel(
-                    songRepository = songRepository,
-                    mediaPlayer = player
+
+                val viewModel = MusiqueViewModel(songRepository = songRepository)
+
+                val sessionToken = SessionToken(
+                    application,
+                    ComponentName(application, MediaPlayerService::class.java)
                 )
+                val controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
+                controllerFuture.addListener({
+                    viewModel.mediaController = controllerFuture.get()
+                }, MoreExecutors.directExecutor())
+                
+                viewModel
             }
         }
     }
