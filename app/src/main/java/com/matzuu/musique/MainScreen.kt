@@ -138,19 +138,37 @@ fun MainScreen(
                     val nextSong = songs[nextIdx]
                     musiqueViewModel.setCurrentSong(nextSong)
                     musiqueViewModel.currentPlaylistIdx = nextIdx
+                    musiqueViewModel.updateHistoryEntry(nextIdx, 0)
                 }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
                 musiqueViewModel.isPlaying = isPlaying
+                mediaController?.run {
+                    val idx = mediaController.currentMediaItemIndex
+                    val timestamp = mediaController.currentPosition
+                    musiqueViewModel.updateHistoryEntry(idx, timestamp)
+                }
+                if (isPlaying) {
+                    musiqueViewModel.intermittentUpdateHistoryEntry()
+                } else {
+                    musiqueViewModel.historyTrackingJob?.cancel()
+                }
             }
         }.also {
             mediaController?.addListener(it)
         }
 
         onDispose {
-            mediaController?.removeListener(listener)
+            mediaController?.run {
+                Log.d(TAG, "onDispose of mediacontroller")
+                val idx = mediaController.currentMediaItemIndex
+                val timestamp = mediaController.currentPosition
+                musiqueViewModel.updateHistoryEntry(idx, timestamp)
+                mediaController.removeListener(listener)
+            }
+            // mediaController?.removeListener(listener)
         }
     }
 
@@ -281,10 +299,61 @@ fun MainScreen(
 
     val navController = rememberNavController()
 
-    val onHistoryEntryClick = { historyEntryId: Long ->
+    val onHistoryEntryClick: (Long) -> Unit = { historyEntryId: Long ->
         Log.d(TAG, "History entry clicked")
         musiqueViewModel.setSubSongsFromHistoryEntryId(historyEntryId)
-        navController.navigate(Screen.SubList.name)
+        //navController.navigate(Screen.SubList.name)
+        mediaController?.let{
+            musiqueViewModel.resumeHistoryEntry(mediaController, historyEntryId)
+        }
+
+        /*
+        val songs = when (val state = musiqueViewModel.musicSubListUiState.value) {
+            is MusicListUiState.Success -> {
+                state.songs
+            }
+            else -> {
+                Log.d(TAG, "subList else case")
+                listOf()
+            }
+        }
+        val (idx, timestamp) = when (val state = musiqueViewModel.currentPlaylistUiState) {
+            is CurrentPlaylistUiState.Success -> {
+                state.historyEntry?.let { (_, _, songIdx, timestamp) ->
+                    val idx = songIdx
+                    val time = timestamp
+                    idx to time
+                }
+                0 to 0L
+            }
+            else -> {
+                0 to 0L
+            }
+        }
+        val mediaItems: List<MediaItem> = songs.map { song ->
+            MediaItem.Builder()
+                .setMediaId(song.id.toString())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(song.title)
+                        .setArtist(song.artist)
+                        .build()
+                )
+                .setUri(song.path)
+                .build()
+        }
+        mediaController?.run {
+            musiqueViewModel.currentPlaylist = songs
+            musiqueViewModel.currentPlaylistIdx = idx
+            stop()
+            setMediaItems(mediaItems, idx, timestamp)
+            prepare()
+            play()
+            //musiqueViewModel.isPlaying = true
+            musiqueViewModel.setCurrentSong(songs[idx])
+            musiqueViewModel.setCurrentPlaylistScrollState(idx)
+        }
+         */
     }
 
     val onAlbumClick = { albumName: String ->

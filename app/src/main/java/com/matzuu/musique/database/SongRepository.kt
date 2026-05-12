@@ -24,6 +24,7 @@ interface SongRepository {
     suspend fun getHistoryEntries(): List<HistoryEntry>
     suspend fun getHistorySongs(historyEntryId: Long): List<Song>
     suspend fun getSongsFromAlbum(album: String): List<Song>
+    suspend fun updateHistoryEntry(historyEntry: HistoryEntry)
 }
 
 class SongRepositoryImpl(
@@ -96,5 +97,9 @@ class SongRepositoryImpl(
 
     override suspend fun getSongsFromAlbum(album: String): List<Song> {
         return musicDao.getSongsFromAlbum(album)
+    }
+
+    override suspend fun updateHistoryEntry(historyEntry: HistoryEntry) {
+        return musicDao.updateHistoryEntry(historyEntry)
     }
 }

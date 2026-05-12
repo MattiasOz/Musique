@@ -1,7 +1,6 @@
 package com.matzuu.musique.viewmodels
 
 import android.content.ComponentName
-import android.media.MediaPlayer
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -17,6 +16,8 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.paging.Pager
@@ -37,6 +38,8 @@ import com.matzuu.musique.uiStates.MusicListUiState
 import com.matzuu.musique.utils.ListPagingSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +92,7 @@ class MusiqueViewModel(
     var mediaController: MediaController? by mutableStateOf(initialMediaController)
         internal set
 
-
+    var historyTrackingJob: Job? = null
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -129,6 +132,7 @@ class MusiqueViewModel(
         fetchAlbumList()
         updateHistoryEntries()
         updateValues()
+        intermittentUpdateHistoryEntry()
     }
 
     fun insertFullSongList(songs: List<Song>) {
@@ -189,7 +193,40 @@ class MusiqueViewModel(
             val songs = songRepository.getHistorySongs(id)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
             val historyEntry = songRepository.getHistoryEntry(id)
-            currentPlaylistUiState = CurrentPlaylistUiState.Success(historyEntry.name)
+            currentPlaylistUiState = CurrentPlaylistUiState.Success(historyEntry.name, historyEntry)
+        }
+    }
+
+    fun resumeHistoryEntry(mediaController: MediaController, id: Long) {
+        viewModelScope.launch{
+            val songs = songRepository.getHistorySongs(id)
+            val historyEntry = songRepository.getHistoryEntry(id)
+            val idx = historyEntry.songIdx
+            val timestamp = historyEntry.timestamp
+
+            val mediaItems: List<MediaItem> = songs.map { song ->
+                MediaItem.Builder()
+                    .setMediaId(song.id.toString())
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(song.title)
+                            .setArtist(song.artist)
+                            .build()
+                    )
+                    .setUri(song.path)
+                    .build()
+            }
+            mediaController.run {
+                currentPlaylist = songs
+                currentPlaylistIdx = idx
+                stop()
+                setMediaItems(mediaItems, idx, timestamp)
+                prepare()
+                play()
+                //musiqueViewModel.isPlaying = true
+                setCurrentSong(songs[idx])
+                setCurrentPlaylistScrollState(idx)
+            }
         }
     }
 
@@ -199,7 +236,7 @@ class MusiqueViewModel(
         viewModelScope.launch {
             val songs = songRepository.getSongsFromAlbum(album)
             _musicSubListUiState.value = MusicListUiState.Success(songs = songs)
-            currentPlaylistUiState = CurrentPlaylistUiState.Success(album)
+            currentPlaylistUiState = CurrentPlaylistUiState.Success(album, null)
         }
     }
 
@@ -235,6 +272,38 @@ class MusiqueViewModel(
         viewModelScope.launch {
             val historyEntries = songRepository.getHistoryEntries()
             historyListUiState = HistoryListUiState.Success(historyEntries = historyEntries)
+        }
+    }
+
+    fun updateHistoryEntry(idx: Int, timestamp: Long) {
+        viewModelScope.launch {
+            when (val state = currentPlaylistUiState) {
+                is CurrentPlaylistUiState.Success -> {
+                    state.historyEntry?.let {
+                        songRepository.updateHistoryEntry(it.copy(
+                            songIdx = idx,
+                            timestamp = timestamp
+                        ))
+                    }
+                }
+                CurrentPlaylistUiState.Unset -> {
+                    //pass
+                }
+            }
+        }
+    }
+
+    fun intermittentUpdateHistoryEntry() {
+        historyTrackingJob?.cancel()
+        historyTrackingJob = viewModelScope.launch {
+            while (true) {
+                delay(60000)
+                mediaController?.let { controller ->
+                    val idx = controller.currentMediaItemIndex
+                    val timestamp = controller.currentPosition
+                    updateHistoryEntry(idx, timestamp)
+                }
+            }
         }
     }
 
