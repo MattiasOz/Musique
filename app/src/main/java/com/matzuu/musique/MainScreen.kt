@@ -34,6 +34,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -101,6 +103,10 @@ fun MainScreen(
     }
     */
     DisposableEffect(mediaController) {
+        mediaController?.setAudioAttributes(
+            AudioAttributes.DEFAULT,
+            true
+        )
         val listener = object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
@@ -497,9 +503,13 @@ fun MainScreen(
                             )
                         }
                     ),
-                    updateOnClick = {
-                        Log.d(TAG, "Update clicked")
+                    updateSongsOnClick = {
+                        Log.d(TAG, "Update Songs clicked")
                         musiqueViewModel.scheduleWorker()
+                    },
+                    updateHistoryOnClick = {
+                        Log.d(TAG, "Update History clicked")
+                        musiqueViewModel.updateHistoryEntries()
                     }
                 )
 
