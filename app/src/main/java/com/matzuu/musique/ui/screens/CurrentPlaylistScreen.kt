@@ -25,7 +25,7 @@ fun CurrentPlaylistScreen(
         val song = playlist[songIdx]
         song.path
     } catch (e: IndexOutOfBoundsException) {
-        Log.e(TAG, "Index out of bounds, returning empty string", e)
+        //Log.e(TAG, "Index out of bounds, returning empty string", e)
         ""
     }
     ListScreen(

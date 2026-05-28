@@ -48,7 +48,7 @@ fun SongListScreen(
                     Log.d(TAG, "SongTitle: ${song.path}")
                     song.path
                 } catch (e: IndexOutOfBoundsException) {
-                    Log.e(TAG, "Index out of bounds, returning empty string", e)
+                    //Log.e(TAG, "Index out of bounds, returning empty string", e)
                     ""
                 }
                 ListScreen(

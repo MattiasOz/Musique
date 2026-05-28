@@ -197,6 +197,7 @@ fun MainScreen(
      */
     val onSongClick: (songs: List<Song>, idx: Int) -> Unit = { songs: List<Song>, idx: Int ->
         Log.d(TAG, "Song clicked ${songs[idx]}")
+        musiqueViewModel.unsetCurrentPlaylistUiState()
 
         val mediaItems: List<MediaItem> = songs.map { song ->
             MediaItem.Builder()

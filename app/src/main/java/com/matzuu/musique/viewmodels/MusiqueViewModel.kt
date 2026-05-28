@@ -30,6 +30,7 @@ import com.matzuu.musique.database.SongRepository
 import com.matzuu.musique.models.Album
 import com.matzuu.musique.models.Song
 import com.matzuu.musique.services.MediaPlayerService
+import com.matzuu.musique.ui.screens.CurrentPlaylistScreen
 import com.matzuu.musique.uiStates.AlbumListUiState
 import com.matzuu.musique.uiStates.CurrentPlaylistUiState
 import com.matzuu.musique.uiStates.CurrentSongUiState
@@ -132,7 +133,6 @@ class MusiqueViewModel(
         fetchAlbumList()
         updateHistoryEntries()
         updateValues()
-        intermittentUpdateHistoryEntry()
     }
 
     fun insertFullSongList(songs: List<Song>) {
@@ -228,6 +228,10 @@ class MusiqueViewModel(
                 setCurrentPlaylistScrollState(idx)
             }
         }
+    }
+
+    fun unsetCurrentPlaylistUiState(){
+        currentPlaylistUiState = CurrentPlaylistUiState.Unset
     }
 
     fun setSubSongsFromAlbum(album: String) {
